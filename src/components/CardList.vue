@@ -12,15 +12,23 @@
         <span>{{ cards.length }}</span>
       </div>
     </div>
+
     <v-btn
       icon="mdi-plus"
       variant="tonal"
       class="mt-5"
       color="white"
-      @click="isNewCardDialogOpen = true" />
+      @click="isNewCardDialogOpen = true" 
+    />
+    
+    <CardSort 
+      v-show="cardsBySort.length > 0"
+      :options="sortingOptions"
+      @change="changeSorting"
+    />
 
     <CardItem
-      v-for="(card, index) in cards"
+      v-for="(card, index) in cardsBySort"
       draggable="true"
       :key="index"
       :card="card"
@@ -38,9 +46,10 @@
 </template>
 
 <script setup>
-  import { ref, inject } from 'vue';
+  import { ref, inject, reactive, computed } from 'vue';
   import CardItem from './CardItem.vue';
   import CardForm from './CardForm.vue';
+  import CardSort from './CardSort.vue';
 
   const firstList = inject('firstList');
   const secondList = inject('secondList');
@@ -64,6 +73,10 @@
 
   let cards = ref([]);
 
+  const sortingOptions = { asc: 1, desc: 2, without: 3 }
+  const sorting = ref(sortingOptions.without)
+  const changeSorting = (value) => sorting.value = value
+  
   function getLocalCards() {
     switch (props.options.id) {
       case 1:
@@ -79,6 +92,25 @@
   }
   getLocalCards();
 
+  function sortList(sortingValue, list) {
+    switch (sortingValue) {
+      case sortingOptions.asc:
+        return list.sort((a, b) => a.rating.rate - b.rating.rate);
+        break;
+      case sortingOptions.desc: 
+        return list.sort((a, b) => b.rating.rate - a.rating.rate);
+        break;
+      case sortingOptions.without: 
+        return list;
+        break;
+    }
+  }
+
+  const cardsBySort = computed(() => {   
+    const newCards = [...[], ...cards.value]
+    return sortList(sorting.value, newCards)
+  })
+  
   function addCard() {
     cards.value.unshift(form.value);
     isNewCardDialogOpen.value = false;
@@ -86,6 +118,7 @@
   function deleteCard(id) {
     cards.value = cards.value.filter((card) => card.id != id);
   }
+
   function onDragStart(event, item) {
     event.dataTransfer.dropEffect = 'move';
     event.dataTransfer.effectAllowed = 'move';

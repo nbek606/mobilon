@@ -31,7 +31,7 @@
         style="width: 400px">
       </v-text-field>
       <v-autocomplete
-        :value="form.category"
+        v-model="form.category"
         :items="categories"
         label="Выберите категорию товара"
         variant="underlined"
